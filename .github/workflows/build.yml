@@ -18,6 +18,7 @@ jobs:
 
       - name: Build App (unsigned)
         run: |
+          set -o pipefail
           xcodebuild \
             -project PushAlarm.xcodeproj \
             -scheme PushAlarm \
@@ -30,7 +31,7 @@ jobs:
             CODE_SIGN_ENTITLEMENTS="" \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM="" \
-            build
+            build 2>&1 | tee xcodebuild.log || (echo "=== XCODEBUILD ERROR LOG ===" && tail -n 100 xcodebuild.log && exit 1)
 
       - name: Package IPA
         run: |

@@ -45,8 +45,7 @@ private struct DayChip: View {
                 .background(
                     Circle()
                         .fill(isSelected
-                              ? Color.accentColor
-                              : Color(.systemGray5))
+                              : Color(uiColor: .systemGray5))
                 )
                 .overlay(
                     Circle()
