@@ -5,6 +5,7 @@
 // processing queue, we expose a thin synchronous test harness below.
 
 import XCTest
+import CoreGraphics
 @testable import PushAlarm
 
 // MARK: - Angle Calculation Tests
