@@ -1,6 +1,6 @@
 // PushAlarm — PoseCounterService.swift
 // On-device push-up rep counter using AVCaptureSession + Apple Vision VNDetectHumanBodyPoseRequest.
-// No data leaves the device — all processing is done in-memory on background queues.
+// Optimized for front-facing (selfie) camera perspective.
 
 import Foundation
 import AVFoundation
@@ -9,11 +9,10 @@ import Combine
 
 // MARK: - PushUpPhase
 
-/// State of the push-up rep state machine.
 enum PushUpPhase: Equatable {
-    case idle       // not started / camera just opened
-    case up         // arms extended (elbow angle > 150°)
-    case down       // arms bent low (elbow angle < 90°)
+    case idle       // camera open / setting up
+    case up         // arms extended high (> 145°)
+    case down       // arms bent low (< 125°)
     case completed  // target reps reached
 }
 
@@ -21,7 +20,7 @@ enum PushUpPhase: Equatable {
 
 final class PoseCounterService: NSObject, ObservableObject {
 
-    // MARK: Published State (always updated on main thread)
+    // MARK: Published State (main thread)
     @Published private(set) var repCount: Int = 0
     @Published private(set) var phase: PushUpPhase = .idle
     @Published private(set) var isBodyVisible: Bool = false
@@ -35,28 +34,26 @@ final class PoseCounterService: NSObject, ObservableObject {
 
     // MARK: Private — Capture
     private let captureSession = AVCaptureSession()
-    let previewLayer: AVCaptureVideoPreviewLayer   // exposed so CameraPreviewView can attach it
+    let previewLayer: AVCaptureVideoPreviewLayer
 
-    // MARK: Private — Processing
+    // MARK: Private — Processing Queue
     private let processingQueue = DispatchQueue(
         label: "com.pushalarm.poseProcessing",
         qos: .userInitiated
     )
 
-    // MARK: Private — Rep State Machine
-    //  Angle thresholds (degrees at the elbow joint):
-    //    < DOWN_THRESHOLD  → "down" state
-    //    > UP_THRESHOLD    → "up" state (from down → triggers rep)
-    private let downThreshold: Double = 90.0
-    private let upThreshold: Double   = 155.0
+    // MARK: Private — Angle & Thresholds (Optimized for Selfie / Front View)
+    // In front-view 2D projection, 3D elbow bending appears wider (110°-125° is low push-up position).
+    private let downThreshold: Double = 125.0
+    private let upThreshold: Double   = 145.0
 
-    // Debounce: require this many consecutive matching frames before transitioning state.
-    private let debounceFrameCount: Int = 4
-    private var downFrameCount: Int  = 0
-    private var upFrameCount: Int    = 0
-    private var hasBeenDown: Bool    = false   // ensures a full down→up cycle
+    // Debounce: 2 consecutive matching frames to trigger state transition
+    private let debounceFrameCount: Int = 2
+    private var downFrameCount: Int = 0
+    private var upFrameCount: Int   = 0
+    private var hasBeenDown: Bool   = false
 
-    // Private phase tracking on the processing queue (avoids reading @Published on bg thread)
+    // Private queue-owned state
     private var internalPhase: PushUpPhase = .idle
     private var internalRepCount: Int = 0
 
@@ -140,9 +137,8 @@ final class PoseCounterService: NSObject, ObservableObject {
 
     private func configureCaptureSession() {
         captureSession.beginConfiguration()
-        captureSession.sessionPreset = .medium
+        captureSession.sessionPreset = .high
 
-        // Front (selfie) camera only
         guard let device = AVCaptureDevice.default(
             .builtInWideAngleCamera,
             for: .video,
@@ -168,7 +164,6 @@ final class PoseCounterService: NSObject, ObservableObject {
         }
         captureSession.addOutput(output)
 
-        // Portrait orientation + mirror for selfie view
         if let connection = output.connection(with: .video) {
             if connection.isVideoOrientationSupported {
                 connection.videoOrientation = .portrait
@@ -199,7 +194,6 @@ final class PoseCounterService: NSObject, ObservableObject {
 
     // MARK: - Private — Elbow Angle
 
-    /// Computes the angle (degrees) at the vertex joint given three 2-D points.
     private func angleDegrees(from a: CGPoint, vertex: CGPoint, to b: CGPoint) -> Double {
         let v1 = CGPoint(x: a.x - vertex.x, y: a.y - vertex.y)
         let v2 = CGPoint(x: b.x - vertex.x, y: b.y - vertex.y)
@@ -211,27 +205,22 @@ final class PoseCounterService: NSObject, ObservableObject {
         return acos(cosA) * (180.0 / .pi)
     }
 
-    // MARK: - Private — Rep State Machine (called on processing queue)
+    // MARK: - Private — Rep State Machine
 
     private func processAngle(_ angle: Double) {
-        // Debounce "down"
         if angle < downThreshold {
             downFrameCount += 1
             upFrameCount = 0
             if downFrameCount >= debounceFrameCount {
                 transitionPhase(.down)
             }
-        }
-        // Debounce "up"
-        else if angle > upThreshold {
+        } else if angle > upThreshold {
             upFrameCount += 1
             downFrameCount = 0
             if upFrameCount >= debounceFrameCount {
                 transitionPhase(.up)
             }
-        }
-        // Neutral zone — reset frame counters but keep phase
-        else {
+        } else {
             downFrameCount = 0
             upFrameCount   = 0
         }
@@ -251,7 +240,6 @@ final class PoseCounterService: NSObject, ObservableObject {
 
         case (_, .up) where internalPhase != .up:
             if hasBeenDown {
-                // Completed one rep
                 hasBeenDown = false
                 downFrameCount = 0
                 upFrameCount   = 0
@@ -267,7 +255,6 @@ final class PoseCounterService: NSObject, ObservableObject {
                     }
                 }
             } else if internalPhase == .idle {
-                // Starting position (first "up" before any rep)
                 internalPhase = .up
                 DispatchQueue.main.async { [weak self] in self?.phase = .up }
             }
@@ -304,29 +291,27 @@ extension PoseCounterService: AVCaptureVideoDataOutputSampleBufferDelegate {
 
         guard let observation = request.results?.first else { return }
 
-        // Extract joints with confidence filter
+        // Lower confidence threshold to 0.15 for smooth joint tracking during motion
         let requiredJoints: [VNHumanBodyPoseObservation.JointName] = [
             .leftShoulder, .rightShoulder,
             .leftElbow,    .rightElbow,
-            .leftWrist,    .rightWrist
+            .leftWrist,    .rightWrist,
+            .nose,         .neck
         ]
 
         var points: [VNHumanBodyPoseObservation.JointName: CGPoint] = [:]
         for joint in requiredJoints {
-            guard let p = try? observation.recognizedPoint(joint), p.confidence > 0.3 else { continue }
+            guard let p = try? observation.recognizedPoint(joint), p.confidence > 0.15 else { continue }
             points[joint] = p.location
         }
 
-        // Need at least one complete arm for angle calculation
         let hasLeft  = points[.leftShoulder]  != nil && points[.leftElbow]  != nil && points[.leftWrist]  != nil
         let hasRight = points[.rightShoulder] != nil && points[.rightElbow] != nil && points[.rightWrist] != nil
 
         guard hasLeft || hasRight else { return }
 
-        // Update visibility timestamp (on processing queue, read by watchdog timer)
         lastBodySeenAt = Date()
 
-        // Calculate elbow angle(s)
         var angles: [Double] = []
         if hasLeft, let ls = points[.leftShoulder], let le = points[.leftElbow], let lw = points[.leftWrist] {
             angles.append(angleDegrees(from: ls, vertex: le, to: lw))
@@ -334,14 +319,14 @@ extension PoseCounterService: AVCaptureVideoDataOutputSampleBufferDelegate {
         if hasRight, let rs = points[.rightShoulder], let re = points[.rightElbow], let rw = points[.rightWrist] {
             angles.append(angleDegrees(from: rs, vertex: re, to: rw))
         }
+
+        guard !angles.isEmpty else { return }
         let avgAngle = angles.reduce(0, +) / Double(angles.count)
 
-        // Publish skeleton for overlay
         DispatchQueue.main.async { [weak self] in
             self?.skeletonPoints = points
         }
 
-        // Feed angle into state machine
         processAngle(avgAngle)
     }
 }
