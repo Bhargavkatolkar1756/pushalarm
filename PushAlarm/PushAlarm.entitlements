@@ -2,16 +2,5 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Standard app sandbox entitlement -->
-	<key>com.apple.security.app-sandbox</key>
-	<false/>
-
-	<!--
-	NOTE: Critical Alerts entitlement (com.apple.developer.usernotifications.critical-alerts)
-	is NOT included here. That entitlement requires explicit Apple approval for health/safety
-	apps. Submit a request at developer.apple.com/contact/request/notifications-critical-alerts
-	after your MVP ships. The app uses standard .timeSensitive notifications + AVAudioSession
-	.playback which is already quite loud.
-	-->
 </dict>
 </plist>

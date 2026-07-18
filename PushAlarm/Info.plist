@@ -73,10 +73,8 @@
 		<string>LaunchLogo</string>
 	</dict>
 
-	<!-- Require camera capability -->
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>front-facing-camera</string>
 		<string>arm64</string>
 	</array>
 
