@@ -63,7 +63,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 NotificationCenter.default.post(
                     name: .didReceiveAlarmNotification,
                     object: nil,
-                    userInfo: ["alarmId": idStr]
+                    userInfo: userInfo
                 )
             }
         }
@@ -81,8 +81,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 
         if let idStr = userInfo["alarmId"] as? String {
             if actionId == UNNotificationDismissActionIdentifier {
-                // User swiped away or dismissed the notification banner!
-                // Re-trigger loud alarm in 1 second!
                 let pushUps = userInfo["pushUps"] as? Int ?? 10
                 let ringtone = userInfo["ringtone"] as? String ?? "siren"
                 let label = userInfo["label"] as? String ?? "PushAlarm"
@@ -93,11 +91,11 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                     label: label
                 )
             } else {
-                // User tapped the notification or tapped "Start Push-Ups" -> open challenge!
+                // User tapped notification -> open challenge immediately!
                 NotificationCenter.default.post(
                     name: .didReceiveAlarmNotification,
                     object: nil,
-                    userInfo: ["alarmId": idStr]
+                    userInfo: userInfo
                 )
             }
         }

@@ -8,7 +8,9 @@ struct ContentView: View {
     @EnvironmentObject var settingsStore: SettingsStore
     @EnvironmentObject var historyStore:  HistoryStore
 
-    /// Set by AppDelegate when a notification is tapped → presents ChallengeView.
+    @Environment(\.scenePhase) private var scenePhase
+
+    /// Set by AppDelegate or scenePhase when a notification is tapped / alarm is due → presents ChallengeView.
     @State private var activeChallenge: Alarm? = nil
 
     var body: some View {
@@ -21,14 +23,34 @@ struct ContentView: View {
             }
         }
         .animation(.easeInOut(duration: 0.4), value: settingsStore.settings.hasCompletedOnboarding)
-        // Listen for alarm notification taps
+        // Listen for alarm notification taps / arrivals
         .onReceive(NotificationCenter.default.publisher(for: .didReceiveAlarmNotification)) { notif in
-            guard let idStr = notif.userInfo?["alarmId"] as? String,
-                  let id    = UUID(uuidString: idStr),
-                  let alarm = alarmStore.alarms.first(where: { $0.id == id }) else { return }
-            activeChallenge = alarm
+            guard let userInfo = notif.userInfo,
+                  let idStr = userInfo["alarmId"] as? String,
+                  let id = UUID(uuidString: idStr) else { return }
+
+            if let alarm = alarmStore.alarms.first(where: { $0.id == id }) {
+                activeChallenge = alarm
+            } else {
+                // Fallback: construct Alarm directly from userInfo payload
+                let label = userInfo["label"] as? String ?? "PushAlarm"
+                let pushUps = userInfo["pushUps"] as? Int ?? 10
+                let ringtoneRaw = userInfo["ringtone"] as? String ?? "siren"
+                let ringtone = RingtoneType(rawValue: ringtoneRaw) ?? .siren
+                let alarm = Alarm(id: id, label: label, ringtone: ringtone, pushUpTarget: pushUps)
+                activeChallenge = alarm
+            }
         }
-        // Full-screen challenge presented modally (covers TabView + alarm sound)
+        // Auto-check for active due alarms when app opens or returns to foreground
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .active {
+                checkForDueAlarms()
+            }
+        }
+        .onAppear {
+            checkForDueAlarms()
+        }
+        // Full-screen challenge presented modally (covers TabView + camera + alarm sound)
         .fullScreenCover(item: $activeChallenge) { alarm in
             ChallengeView(alarm: alarm)
                 .environmentObject(historyStore)
@@ -54,5 +76,21 @@ struct ContentView: View {
         }
         .accentColor(Color.accentColor)
         .preferredColorScheme(.dark)
+    }
+
+    // MARK: - Helper
+
+    private func checkForDueAlarms() {
+        guard activeChallenge == nil else { return }
+        let now = Date()
+        let cal = Calendar.current
+        let currentHour = cal.component(.hour, from: now)
+        let currentMinute = cal.component(.minute, from: now)
+
+        if let dueAlarm = alarmStore.alarms.first(where: { alarm in
+            alarm.isEnabled && alarm.hour == currentHour && alarm.minute == currentMinute
+        }) {
+            activeChallenge = dueAlarm
+        }
     }
 }
