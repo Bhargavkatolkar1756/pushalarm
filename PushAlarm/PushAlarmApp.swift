@@ -35,8 +35,6 @@ struct PushAlarmApp: App {
 
 // MARK: - AppDelegate
 
-/// Handles UNUserNotificationCenter delegate callbacks and posts the alarm notification
-/// to ContentView via NotificationCenter.
 final class AppDelegate: NSObject, UIApplicationDelegate {
 
     func application(
@@ -72,19 +70,36 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         completionHandler([.banner, .sound, .badge])
     }
 
-    /// User tapped the notification — extract alarmId and post to ContentView.
+    /// Handles user interaction with notifications (taps, swipes, dismissals).
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         let userInfo = response.notification.request.content.userInfo
+        let actionId = response.actionIdentifier
+
         if let idStr = userInfo["alarmId"] as? String {
-            NotificationCenter.default.post(
-                name: .didReceiveAlarmNotification,
-                object: nil,
-                userInfo: ["alarmId": idStr]
-            )
+            if actionId == UNNotificationDismissActionIdentifier {
+                // User swiped away or dismissed the notification banner!
+                // Re-trigger loud alarm in 1 second!
+                let pushUps = userInfo["pushUps"] as? Int ?? 10
+                let ringtone = userInfo["ringtone"] as? String ?? "siren"
+                let label = userInfo["label"] as? String ?? "PushAlarm"
+                AlarmScheduler.shared.scheduleImmediateRetry(
+                    for: idStr,
+                    pushUps: pushUps,
+                    ringtoneRaw: ringtone,
+                    label: label
+                )
+            } else {
+                // User tapped the notification or tapped "Start Push-Ups" -> open challenge!
+                NotificationCenter.default.post(
+                    name: .didReceiveAlarmNotification,
+                    object: nil,
+                    userInfo: ["alarmId": idStr]
+                )
+            }
         }
         completionHandler()
     }

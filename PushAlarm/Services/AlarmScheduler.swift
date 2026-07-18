@@ -1,5 +1,6 @@
 // PushAlarm — AlarmScheduler.swift
 // Schedules and cancels UNUserNotificationCenter local notifications for each alarm.
+// Implements anti-dismissal burst notifications so the alarm re-triggers every 5 seconds if ignored or swiped away.
 
 import Foundation
 import UserNotifications
@@ -51,27 +52,62 @@ final class AlarmScheduler {
         alarms.filter(\.isEnabled).forEach { scheduleNotifications(for: $0) }
     }
 
+    /// Immediately fires a retry notification in 1 second if the user swipes away or dismisses the notification.
+    func scheduleImmediateRetry(for alarmIdStr: String, pushUps: Int, ringtoneRaw: String, label: String) {
+        let content = UNMutableNotificationContent()
+        content.title = label.isEmpty ? "🚨 DO YOUR PUSH-UPS!" : "🚨 \(label)"
+        content.body = "Alarm cannot be dismissed! Complete \(pushUps) push-ups now!"
+
+        let ringtone = RingtoneType(rawValue: ringtoneRaw) ?? .siren
+        let soundName = UNNotificationSoundName(rawValue: "\(ringtone.fileName).\(ringtone.fileExtension)")
+        content.sound = UNNotificationSound(named: soundName)
+        content.interruptionLevel = .timeSensitive
+        content.userInfo = [
+            "alarmId":  alarmIdStr,
+            "pushUps":  pushUps,
+            "ringtone": ringtoneRaw
+        ]
+        content.categoryIdentifier = "ALARM_CHALLENGE"
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1.0, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "com.pushalarm.retry.\(alarmIdStr).\(Date().timeIntervalSince1970)",
+            content: content,
+            trigger: trigger
+        )
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error { print("[Scheduler] Retry scheduling error: \(error)") }
+        }
+    }
+
     // MARK: - Private Helpers
 
     private func scheduleNotifications(for alarm: Alarm) {
         let content = makeContent(for: alarm)
 
+        // Schedule burst notifications spaced 5 seconds apart across the minute (0s, 5s, 10s, 15s, 20s, 25s, 30s, 35s, 40s, 45s, 50s, 55s)
+        let burstOffsets = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+
         if alarm.repeatDays.isEmpty {
-            // One-shot: fire once at the next occurrence of this time.
-            let trigger = oneTimeTrigger(hour: alarm.hour, minute: alarm.minute)
-            let id = notificationIdentifier(for: alarm.id, weekday: nil)
-            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-            UNUserNotificationCenter.current().add(request) { error in
-                if let error { print("[Scheduler] Error scheduling one-shot: \(error)") }
-            }
-        } else {
-            // Repeating: one notification per enabled weekday.
-            for day in alarm.repeatDays {
-                let trigger = repeatingTrigger(hour: alarm.hour, minute: alarm.minute, weekday: day.calendarWeekday)
-                let id = notificationIdentifier(for: alarm.id, weekday: day.rawValue)
+            // One-shot
+            for offset in burstOffsets {
+                let trigger = oneTimeTrigger(hour: alarm.hour, minute: alarm.minute, secondOffset: offset)
+                let id = notificationIdentifier(for: alarm.id, weekday: nil, offset: offset)
                 let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
                 UNUserNotificationCenter.current().add(request) { error in
-                    if let error { print("[Scheduler] Error scheduling repeat: \(error)") }
+                    if let error { print("[Scheduler] Error scheduling burst offset \(offset): \(error)") }
+                }
+            }
+        } else {
+            // Repeating
+            for day in alarm.repeatDays {
+                for offset in burstOffsets {
+                    let trigger = repeatingTrigger(hour: alarm.hour, minute: alarm.minute, secondOffset: offset, weekday: day.calendarWeekday)
+                    let id = notificationIdentifier(for: alarm.id, weekday: day.rawValue, offset: offset)
+                    let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+                    UNUserNotificationCenter.current().add(request) { error in
+                        if let error { print("[Scheduler] Error scheduling repeat burst offset \(offset): \(error)") }
+                    }
                 }
             }
         }
@@ -87,51 +123,54 @@ final class AlarmScheduler {
         content.userInfo = [
             "alarmId":    alarm.id.uuidString,
             "pushUps":    alarm.pushUpTarget,
-            "ringtone":   alarm.ringtone.rawValue
+            "ringtone":   alarm.ringtone.rawValue,
+            "label":      alarm.label
         ]
-        // Category for foreground deep-link
         content.categoryIdentifier = "ALARM_CHALLENGE"
         return content
     }
 
-    private func oneTimeTrigger(hour: Int, minute: Int) -> UNCalendarNotificationTrigger {
+    private func oneTimeTrigger(hour: Int, minute: Int, secondOffset: Int) -> UNCalendarNotificationTrigger {
         var comps = DateComponents()
         comps.hour   = hour
         comps.minute = minute
-        comps.second = 0
+        comps.second = secondOffset
         return UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
     }
 
-    private func repeatingTrigger(hour: Int, minute: Int, weekday: Int) -> UNCalendarNotificationTrigger {
+    private func repeatingTrigger(hour: Int, minute: Int, secondOffset: Int, weekday: Int) -> UNCalendarNotificationTrigger {
         var comps = DateComponents()
         comps.hour    = hour
         comps.minute  = minute
-        comps.second  = 0
-        comps.weekday = weekday  // 1 = Sunday … 7 = Saturday
+        comps.second  = secondOffset
+        comps.weekday = weekday
         return UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
     }
 
     // MARK: - Identifier Helpers
 
     private func notificationIdentifiers(for alarmId: UUID) -> [String] {
-        // one-shot
-        var ids = [notificationIdentifier(for: alarmId, weekday: nil)]
-        // one per weekday (1-7)
-        for w in 1...7 { ids.append(notificationIdentifier(for: alarmId, weekday: w)) }
+        var ids: [String] = []
+        let burstOffsets = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+        for offset in burstOffsets {
+            ids.append(notificationIdentifier(for: alarmId, weekday: nil, offset: offset))
+            for w in 1...7 {
+                ids.append(notificationIdentifier(for: alarmId, weekday: w, offset: offset))
+            }
+        }
         return ids
     }
 
-    private func notificationIdentifier(for alarmId: UUID, weekday: Int?) -> String {
+    private func notificationIdentifier(for alarmId: UUID, weekday: Int?, offset: Int = 0) -> String {
         let base = "com.pushalarm.notification.\(alarmId.uuidString)"
-        if let w = weekday { return "\(base).day\(w)" }
-        return base
+        if let w = weekday { return "\(base).day\(w).off\(offset)" }
+        return "\(base).off\(offset)"
     }
 }
 
 // MARK: - Notification Category Registration
 
 extension AlarmScheduler {
-    /// Call once at app launch to register the ALARM_CHALLENGE category.
     func registerNotificationCategories() {
         let openAction = UNNotificationAction(
             identifier: "OPEN_CHALLENGE",
@@ -151,6 +190,5 @@ extension AlarmScheduler {
 // MARK: - Notification Name
 
 extension Notification.Name {
-    /// Posted (main thread) when a notification tap brings the alarm to the foreground.
     static let didReceiveAlarmNotification = Notification.Name("didReceiveAlarmNotification")
 }
