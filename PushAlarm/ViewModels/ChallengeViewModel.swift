@@ -3,12 +3,13 @@
 
 import Foundation
 import AVFoundation
+import Vision
 import Combine
 
 enum ChallengeState {
     case waitingForCamera   // session setting up
     case active             // camera running, counting reps
-    case bodyNotVisible     // 15-second watchdog tripped
+    case bodyNotVisible     // body not detected for >15 seconds
     case completed          // target reps done 🎉
     case error(String)
 }
@@ -21,7 +22,6 @@ final class ChallengeViewModel: ObservableObject {
     @Published var repCount: Int = 0
     @Published var elbowAngle: Double = 0
     @Published var isBodyVisible: Bool = false
-    @Published var skeletonPoints: [VNHumanBodyPoseObservation.JointNameKey: CGPoint] = [:]
     @Published var phase: PushUpPhase = .idle
 
     let alarm: Alarm
@@ -51,7 +51,6 @@ final class ChallengeViewModel: ObservableObject {
             }
             poseService.startChallenge(targetReps: alarm.pushUpTarget)
             state = .active
-            // Start ringtone
             audioService.play(ringtone: alarm.ringtone)
         }
     }
@@ -107,7 +106,3 @@ final class ChallengeViewModel: ObservableObject {
         poseService.challengeDurationSeconds
     }
 }
-
-// typealias to avoid importing Vision in the ViewModel file
-import Vision
-typealias VNHumanBodyPoseObservation_JointNameKey = VNHumanBodyPoseObservation.JointName

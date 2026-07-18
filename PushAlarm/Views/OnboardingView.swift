@@ -61,7 +61,6 @@ struct OnboardingView: View {
                             startPoint: .topLeading, endPoint: .bottomTrailing
                         )
                     )
-                    .symbolEffect(.variableColor.iterative, options: .repeating)
             }
 
             VStack(spacing: 16) {

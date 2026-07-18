@@ -40,7 +40,7 @@ struct ContentView: View {
 
     private var mainTabView: some View {
         TabView {
-            AlarmListView(pendingChallenge: $activeChallenge)
+            AlarmListView(pendingChallenge: $activeChallenge, alarmStore: alarmStore)
                 .tabItem {
                     Label("Alarms", systemImage: "alarm.fill")
                 }

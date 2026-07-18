@@ -14,10 +14,9 @@ struct AlarmListView: View {
     @State private var showingEditor: Bool = false
     @State private var editingAlarm: Alarm? = nil
 
-    init(pendingChallenge: Binding<Alarm?>) {
+    init(pendingChallenge: Binding<Alarm?>, alarmStore: AlarmStore) {
         self._pendingChallenge = pendingChallenge
-        // StateObject requires @StateObject wrapper – we'll re-init in .task
-        self._viewModel = StateObject(wrappedValue: AlarmListViewModel(alarmStore: AlarmStore()))
+        self._viewModel = StateObject(wrappedValue: AlarmListViewModel(alarmStore: alarmStore))
     }
 
     var body: some View {
@@ -74,7 +73,6 @@ struct AlarmListView: View {
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2)
-                            .symbolEffect(.bounce, value: showingEditor)
                             .foregroundStyle(Color.accentColor)
                     }
                     .accessibilityLabel("Add new alarm")
@@ -232,7 +230,6 @@ private struct EmptyAlarmsView: View {
                         startPoint: .topLeading, endPoint: .bottomTrailing
                     )
                 )
-                .symbolEffect(.variableColor.iterative, options: .repeating)
 
             VStack(spacing: 8) {
                 Text("No Alarms Yet")

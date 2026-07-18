@@ -7,33 +7,26 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14   # free macOS runner with Xcode 16
+    runs-on: macos-latest   # macOS runner with latest Xcode
 
     steps:
       # ── 1. Check out your code ──────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Select Xcode 16 ──────────────────────────────────────────────
-      - name: Select Xcode 16
+      # ── 2. Select Xcode ─────────────────────────────────────────────────
+      - name: Select Xcode Version
         run: |
-          sudo xcode-select -s /Applications/Xcode_16.2.app 2>/dev/null || \
-          sudo xcode-select -s /Applications/Xcode_16.1.app 2>/dev/null || \
+          sudo xcode-select -s /Applications/Xcode_15.4.app 2>/dev/null || \
           sudo xcode-select -s /Applications/Xcode_16.0.app 2>/dev/null || \
+          sudo xcode-select -s /Applications/Xcode_16.1.app 2>/dev/null || \
+          sudo xcode-select -s /Applications/Xcode_16.2.app 2>/dev/null || \
           sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
           xcodebuild -version
 
-      # ── 3. Resolve package dependencies (if any future SPM packages added) ──
-      - name: Resolve packages
-        run: |
-          xcodebuild -resolvePackageDependencies \
-            -project PushAlarm.xcodeproj \
-            -scheme PushAlarm 2>/dev/null || true
-
-      # ── 4. Build archive (no signing — Sideloadly signs it on Windows) ──
+      # ── 3. Build archive (unsigned) ─────────────────────────────────────
       - name: Build Archive (unsigned)
         run: |
-          set -o pipefail
           xcodebuild archive \
             -project PushAlarm.xcodeproj \
             -scheme PushAlarm \
@@ -44,29 +37,17 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            DEVELOPMENT_TEAM="" \
-            | xcpretty --color || true
-          # Fallback: run again without xcpretty if it failed
-          if [ ! -d "$RUNNER_TEMP/PushAlarm.xcarchive" ]; then
-            xcodebuild archive \
-              -project PushAlarm.xcodeproj \
-              -scheme PushAlarm \
-              -configuration Release \
-              -archivePath "$RUNNER_TEMP/PushAlarm.xcarchive" \
-              -destination "generic/platform=iOS" \
-              CODE_SIGNING_ALLOWED=NO \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGN_IDENTITY="" \
-              AD_HOC_CODE_SIGNING_ALLOWED=YES \
-              DEVELOPMENT_TEAM=""
-          fi
+            DEVELOPMENT_TEAM=""
 
-      # ── 5. Package .app → .ipa ──────────────────────────────────────────
-      # Apple's IPA format is just a zip: Payload/<AppName>.app
+      # ── 4. Package .app → .ipa ──────────────────────────────────────────
       - name: Package IPA
         run: |
           APP_PATH=$(find "$RUNNER_TEMP/PushAlarm.xcarchive/Products" -name "*.app" | head -1)
-          echo "Found app: $APP_PATH"
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: .app file not found in archive!"
+            exit 1
+          fi
+          echo "Found app at: $APP_PATH"
 
           PAYLOAD_DIR="$RUNNER_TEMP/Payload"
           mkdir -p "$PAYLOAD_DIR"
@@ -74,10 +55,10 @@ jobs:
 
           cd "$RUNNER_TEMP"
           zip -qr PushAlarm.ipa Payload
-          echo "IPA created at: $RUNNER_TEMP/PushAlarm.ipa"
+          echo "IPA created successfully at: $RUNNER_TEMP/PushAlarm.ipa"
           ls -lh PushAlarm.ipa
 
-      # ── 6. Upload IPA as a downloadable artifact (30-day retention) ─────
+      # ── 5. Upload IPA as a downloadable artifact ─────────────────────────
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
@@ -85,9 +66,9 @@ jobs:
           path: ${{ runner.temp }}/PushAlarm.ipa
           retention-days: 30
 
-      # ── 7. Show build summary ───────────────────────────────────────────
+      # ── 6. Show build summary ───────────────────────────────────────────
       - name: Build summary
         run: |
           echo "✅ Build complete!"
-          echo "📦 Download 'PushAlarm-IPA' from the Actions tab → this workflow run → Artifacts"
+          echo "📦 Download 'PushAlarm-IPA' from Actions → Artifacts"
           echo "📱 Install on iPhone using Sideloadly (Windows) — sideloadly.io"
