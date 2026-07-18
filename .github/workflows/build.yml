@@ -21,7 +21,7 @@ jobs:
           set -o pipefail
           xcodebuild \
             -project PushAlarm.xcodeproj \
-            -scheme PushAlarm \
+            -target PushAlarm \
             -destination "generic/platform=iOS" \
             -configuration Release \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
