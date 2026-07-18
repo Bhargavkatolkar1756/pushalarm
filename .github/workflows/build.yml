@@ -22,7 +22,7 @@ jobs:
           xcodebuild \
             -project PushAlarm.xcodeproj \
             -target PushAlarm \
-            -destination "generic/platform=iOS" \
+            -sdk iphoneos \
             -configuration Release \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             CODE_SIGNING_ALLOWED=NO \
