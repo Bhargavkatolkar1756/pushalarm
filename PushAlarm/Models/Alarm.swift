@@ -41,11 +41,11 @@ enum WeekDay: Int, Codable, CaseIterable, Identifiable, Hashable {
 // MARK: - RingtoneType
 
 enum RingtoneType: String, Codable, CaseIterable, Identifiable {
-    case siren           = "Siren"
-    case airHorn         = "AirHorn"
-    case drillSergeant   = "DrillSergeant"
-    case foghorn         = "Foghorn"
-    case emergencyBeacon = "EmergencyBeacon"
+    case siren           = "siren"
+    case airHorn         = "air_horn"
+    case drillSergeant   = "drill_sergeant"
+    case foghorn         = "foghorn"
+    case emergencyBeacon = "emergency_beacon"
 
     var id: String { rawValue }
 
@@ -62,8 +62,7 @@ enum RingtoneType: String, Codable, CaseIterable, Identifiable {
     /// Filename (without extension) expected in the app bundle Resources/Ringtones/.
     var fileName: String { rawValue }
 
-    /// Apple Core Audio Format — best for short-looping iOS sounds.
-    var fileExtension: String { "caf" }
+    var fileExtension: String { "wav" }
 
     var systemIconName: String {
         switch self {

@@ -27,6 +27,11 @@
 		AABB1100CCDD2200EEFF3551 /* DayToggleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB1100CCDD2200EEFF3451; };
 		AABB1100CCDD2200EEFF3552 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB1100CCDD2200EEFF3452; };
 		AABB1100CCDD2200EEFF3560 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AABB1100CCDD2200EEFF3460; };
+		AABB1100CCDD2200EEFF3561 /* siren.wav in Resources */ = {isa = PBXBuildFile; fileRef = AABB1100CCDD2200EEFF3461; };
+		AABB1100CCDD2200EEFF3562 /* air_horn.wav in Resources */ = {isa = PBXBuildFile; fileRef = AABB1100CCDD2200EEFF3462; };
+		AABB1100CCDD2200EEFF3563 /* drill_sergeant.wav in Resources */ = {isa = PBXBuildFile; fileRef = AABB1100CCDD2200EEFF3463; };
+		AABB1100CCDD2200EEFF3564 /* foghorn.wav in Resources */ = {isa = PBXBuildFile; fileRef = AABB1100CCDD2200EEFF3464; };
+		AABB1100CCDD2200EEFF3565 /* emergency_beacon.wav in Resources */ = {isa = PBXBuildFile; fileRef = AABB1100CCDD2200EEFF3465; };
 		AABB1100CCDD2200EEFF3570 /* RepCountingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB1100CCDD2200EEFF3470; };
 		AABB1100CCDD2200EEFF3571 /* AlarmSchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB1100CCDD2200EEFF3471; };
 /* End PBXBuildFile section */
@@ -66,6 +71,11 @@
 		AABB1100CCDD2200EEFF3451 /* DayToggleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayToggleView.swift; sourceTree = "<group>"; };
 		AABB1100CCDD2200EEFF3452 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
 		AABB1100CCDD2200EEFF3460 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AABB1100CCDD2200EEFF3461 /* siren.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = siren.wav; path = Ringtones/siren.wav; sourceTree = "<group>"; };
+		AABB1100CCDD2200EEFF3462 /* air_horn.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = air_horn.wav; path = Ringtones/air_horn.wav; sourceTree = "<group>"; };
+		AABB1100CCDD2200EEFF3463 /* drill_sergeant.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = drill_sergeant.wav; path = Ringtones/drill_sergeant.wav; sourceTree = "<group>"; };
+		AABB1100CCDD2200EEFF3464 /* foghorn.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = foghorn.wav; path = Ringtones/foghorn.wav; sourceTree = "<group>"; };
+		AABB1100CCDD2200EEFF3465 /* emergency_beacon.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = emergency_beacon.wav; path = Ringtones/emergency_beacon.wav; sourceTree = "<group>"; };
 		AABB1100CCDD2200EEFF3470 /* RepCountingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepCountingTests.swift; sourceTree = "<group>"; };
 		AABB1100CCDD2200EEFF3471 /* AlarmSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSchedulerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -187,6 +197,11 @@
 			isa = PBXGroup;
 			children = (
 				AABB1100CCDD2200EEFF3460 /* Assets.xcassets */,
+				AABB1100CCDD2200EEFF3461 /* siren.wav */,
+				AABB1100CCDD2200EEFF3462 /* air_horn.wav */,
+				AABB1100CCDD2200EEFF3463 /* drill_sergeant.wav */,
+				AABB1100CCDD2200EEFF3464 /* foghorn.wav */,
+				AABB1100CCDD2200EEFF3465 /* emergency_beacon.wav */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -282,6 +297,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				AABB1100CCDD2200EEFF3560 /* Assets.xcassets in Resources */,
+				AABB1100CCDD2200EEFF3561 /* siren.wav in Resources */,
+				AABB1100CCDD2200EEFF3562 /* air_horn.wav in Resources */,
+				AABB1100CCDD2200EEFF3563 /* drill_sergeant.wav in Resources */,
+				AABB1100CCDD2200EEFF3564 /* foghorn.wav in Resources */,
+				AABB1100CCDD2200EEFF3565 /* emergency_beacon.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

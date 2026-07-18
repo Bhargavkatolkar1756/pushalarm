@@ -59,6 +59,16 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        let userInfo = notification.request.content.userInfo
+        if let idStr = userInfo["alarmId"] as? String {
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .didReceiveAlarmNotification,
+                    object: nil,
+                    userInfo: ["alarmId": idStr]
+                )
+            }
+        }
         completionHandler([.banner, .sound, .badge])
     }
 

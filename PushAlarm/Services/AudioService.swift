@@ -111,7 +111,8 @@ final class AudioService: NSObject, ObservableObject {
     // MARK: - Private Helpers
 
     private func bundledURL(for ringtone: RingtoneType) -> URL? {
-        Bundle.main.url(forResource: ringtone.fileName, withExtension: ringtone.fileExtension)
+        Bundle.main.url(forResource: ringtone.fileName, withExtension: ringtone.fileExtension) ??
+        Bundle.main.url(forResource: ringtone.fileName, withExtension: ringtone.fileExtension, subdirectory: "Ringtones")
     }
 
     private func startSystemSoundLoop() {
