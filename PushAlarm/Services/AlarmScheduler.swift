@@ -81,7 +81,8 @@ final class AlarmScheduler {
         let content = UNMutableNotificationContent()
         content.title = alarm.label.isEmpty ? "PushAlarm" : alarm.label
         content.body = "Complete \(alarm.pushUpTarget) push-ups to silence the alarm!"
-        content.sound = .default
+        let soundName = UNNotificationSoundName(rawValue: "\(alarm.ringtone.fileName).\(alarm.ringtone.fileExtension)")
+        content.sound = UNNotificationSound(named: soundName)
         content.interruptionLevel = .timeSensitive
         content.userInfo = [
             "alarmId":    alarm.id.uuidString,

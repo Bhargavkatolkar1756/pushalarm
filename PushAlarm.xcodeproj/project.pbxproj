@@ -71,11 +71,11 @@
 		AABB1100CCDD2200EEFF3451 /* DayToggleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayToggleView.swift; sourceTree = "<group>"; };
 		AABB1100CCDD2200EEFF3452 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
 		AABB1100CCDD2200EEFF3460 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		AABB1100CCDD2200EEFF3461 /* siren.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = siren.wav; path = Ringtones/siren.wav; sourceTree = "<group>"; };
-		AABB1100CCDD2200EEFF3462 /* air_horn.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = air_horn.wav; path = Ringtones/air_horn.wav; sourceTree = "<group>"; };
-		AABB1100CCDD2200EEFF3463 /* drill_sergeant.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = drill_sergeant.wav; path = Ringtones/drill_sergeant.wav; sourceTree = "<group>"; };
-		AABB1100CCDD2200EEFF3464 /* foghorn.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = foghorn.wav; path = Ringtones/foghorn.wav; sourceTree = "<group>"; };
-		AABB1100CCDD2200EEFF3465 /* emergency_beacon.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = emergency_beacon.wav; path = Ringtones/emergency_beacon.wav; sourceTree = "<group>"; };
+		AABB1100CCDD2200EEFF3461 /* siren.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = siren.wav; sourceTree = "<group>"; };
+		AABB1100CCDD2200EEFF3462 /* air_horn.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = air_horn.wav; sourceTree = "<group>"; };
+		AABB1100CCDD2200EEFF3463 /* drill_sergeant.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = drill_sergeant.wav; sourceTree = "<group>"; };
+		AABB1100CCDD2200EEFF3464 /* foghorn.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = foghorn.wav; sourceTree = "<group>"; };
+		AABB1100CCDD2200EEFF3465 /* emergency_beacon.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = emergency_beacon.wav; sourceTree = "<group>"; };
 		AABB1100CCDD2200EEFF3470 /* RepCountingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepCountingTests.swift; sourceTree = "<group>"; };
 		AABB1100CCDD2200EEFF3471 /* AlarmSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSchedulerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
