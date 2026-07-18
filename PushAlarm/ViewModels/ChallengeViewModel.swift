@@ -6,7 +6,7 @@ import AVFoundation
 import Vision
 import Combine
 
-enum ChallengeState {
+enum ChallengeState: Equatable {
     case waitingForCamera   // session setting up
     case active             // camera running, counting reps
     case bodyNotVisible     // body not detected for >15 seconds
