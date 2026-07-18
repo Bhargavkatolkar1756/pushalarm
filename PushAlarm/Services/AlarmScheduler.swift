@@ -81,7 +81,7 @@ final class AlarmScheduler {
         let content = UNMutableNotificationContent()
         content.title = alarm.label.isEmpty ? "PushAlarm" : alarm.label
         content.body = "Complete \(alarm.pushUpTarget) push-ups to silence the alarm!"
-        content.sound = UNNotificationSound.defaultCritical   // loudest available without entitlement
+        content.sound = .default
         content.interruptionLevel = .timeSensitive
         content.userInfo = [
             "alarmId":    alarm.id.uuidString,

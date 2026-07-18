@@ -3,6 +3,7 @@
 // so sound continues even when the mute switch is on.
 
 import AVFoundation
+import AudioToolbox
 import UIKit
 
 // MARK: - AudioService
@@ -125,5 +126,4 @@ extension AudioService: AVAudioPlayerDelegate {
     }
 }
 
-// MARK: - AudioServices import shim
-import AudioToolbox
+
