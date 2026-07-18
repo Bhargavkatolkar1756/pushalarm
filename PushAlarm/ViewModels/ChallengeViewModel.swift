@@ -91,6 +91,8 @@ final class ChallengeViewModel: ObservableObject {
 
     private func handleCompletion() {
         audioService.stop()
+        AlarmScheduler.shared.cancelNotifications(for: alarm.id)
+        AlarmScheduler.shared.cancelAll()
         state = .completed
         poseService.stopSession()
     }

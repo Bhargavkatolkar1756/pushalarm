@@ -68,7 +68,7 @@ struct ChallengeView: View {
             }
 
             // ── Layer 5: Completion Screen ────────────────────────────────────────
-            if case .completed = viewModel.phase {
+            if viewModel.phase == .completed || viewModel.state == .completed {
                 completionOverlay
                     .transition(.scale.combined(with: .opacity))
                     .zIndex(10)
