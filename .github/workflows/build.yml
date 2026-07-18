@@ -24,7 +24,8 @@ jobs:
             -target PushAlarm \
             -sdk iphoneos \
             -configuration Release \
-            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            SYMROOT="$RUNNER_TEMP/Products" \
+            OBJROOT="$RUNNER_TEMP/Intermediates" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
@@ -35,9 +36,9 @@ jobs:
 
       - name: Package IPA
         run: |
-          APP_PATH=$(find "$RUNNER_TEMP/DerivedData" -name "PushAlarm.app" | head -1)
+          APP_PATH=$(find "$RUNNER_TEMP/Products" -name "PushAlarm.app" | head -1)
           if [ -z "$APP_PATH" ]; then
-            echo "Error: PushAlarm.app not found in DerivedData!"
+            echo "Error: PushAlarm.app not found in Products!"
             exit 1
           fi
           echo "Found app at: $APP_PATH"
