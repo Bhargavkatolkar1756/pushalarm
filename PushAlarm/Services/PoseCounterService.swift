@@ -57,8 +57,8 @@ final class PoseCounterService: NSObject, ObservableObject {
     private var hasBeenDown: Bool    = false   // ensures a full down→up cycle
 
     // Private phase tracking on the processing queue (avoids reading @Published on bg thread)
-    private var _phase: PushUpPhase = .idle
-    private var _repCount: Int = 0
+    private var internalPhase: PushUpPhase = .idle
+    private var internalRepCount: Int = 0
 
     // MARK: Private — Visibility Watchdog
     private var lastBodySeenAt: Date? = nil
@@ -120,8 +120,8 @@ final class PoseCounterService: NSObject, ObservableObject {
     }
 
     func reset() {
-        _phase = .idle
-        _repCount = 0
+        internalPhase = .idle
+        internalRepCount = 0
         downFrameCount = 0
         upFrameCount   = 0
         hasBeenDown    = false
@@ -212,10 +212,6 @@ final class PoseCounterService: NSObject, ObservableObject {
     }
 
     // MARK: - Private — Rep State Machine (called on processing queue)
-    //
-    // Uses _phase and _repCount (private, queue-owned) rather than reading @Published
-    // properties from the background thread — eliminates the need for DispatchQueue.main.sync
-    // which risked deadlocking when called from a non-main queue.
 
     private func processAngle(_ angle: Double) {
         // Debounce "down"
@@ -245,25 +241,23 @@ final class PoseCounterService: NSObject, ObservableObject {
         }
     }
 
-    /// All reads/writes are to private `_phase` / `_repCount` (processing-queue owned).
-    /// Only publishes results back to the main thread via `DispatchQueue.main.async`.
     private func transitionPhase(_ newPhase: PushUpPhase) {
-        switch (_phase, newPhase) {
+        switch (internalPhase, newPhase) {
 
-        case (_, .down) where _phase != .down:
-            _phase = .down
+        case (_, .down) where internalPhase != .down:
+            internalPhase = .down
             hasBeenDown = true
             DispatchQueue.main.async { [weak self] in self?.phase = .down }
 
-        case (_, .up) where _phase != .up:
+        case (_, .up) where internalPhase != .up:
             if hasBeenDown {
                 // Completed one rep
                 hasBeenDown = false
                 downFrameCount = 0
                 upFrameCount   = 0
-                _repCount += 1
-                _phase = _repCount >= targetReps ? .completed : .up
-                let snapshot = (_repCount, _phase, targetReps)
+                internalRepCount += 1
+                internalPhase = internalRepCount >= targetReps ? .completed : .up
+                let snapshot = (internalRepCount, internalPhase, targetReps)
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
                     self.repCount = snapshot.0
@@ -272,9 +266,9 @@ final class PoseCounterService: NSObject, ObservableObject {
                         self.onTargetReached?()
                     }
                 }
-            } else if _phase == .idle {
+            } else if internalPhase == .idle {
                 // Starting position (first "up" before any rep)
-                _phase = .up
+                internalPhase = .up
                 DispatchQueue.main.async { [weak self] in self?.phase = .up }
             }
 
