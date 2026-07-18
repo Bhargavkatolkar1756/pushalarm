@@ -1,0 +1,49 @@
+# .gitignore for PushAlarm Xcode project
+
+# ── Xcode ────────────────────────────────────────
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-to-trash
+*.xcuserstate
+*.xcscmblueprint
+*.xcbkptlist
+
+# ── Swift Package Manager ────────────────────────
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# ── CocoaPods (not used, but just in case) ───────
+Pods/
+Podfile.lock
+
+# ── Build artifacts ──────────────────────────────
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ── OS X ─────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ── Windows ──────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Secrets (never commit these) ─────────────────
+*.p12
+*.mobileprovision
+AuthKey_*.p8
